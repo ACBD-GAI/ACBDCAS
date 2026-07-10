@@ -1959,6 +1959,24 @@ async function sendSelectedReport() {
 
 }
 
+  window.addEventListener("pagehide", function(){
+
+const email = localStorage.getItem("inventoryEmail");
+const sessionId = localStorage.getItem("sessionId");
+
+if(email && sessionId){
+
+fetch(
+API_URL +
+"?action=logout" +
+"&email=" + encodeURIComponent(email) +
+"&sessionId=" + encodeURIComponent(sessionId)
+);
+
+}
+
+});
+
   
 
   
