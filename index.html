@@ -1379,12 +1379,40 @@ catch (e) {
 }
 }
 
+  async function stopNormalScanner(){
+
+  if(scanner){
+
+    try{
+      await scanner.stop();
+      await scanner.clear();
+    }
+    catch(e){
+      console.log("Normal scanner stop:", e);
+    }
+
+    scanner=null;
+  }
+
+  isScanning=false;
+
+  setUIScanning(false);
+
+}
+
   let auditScanner = null;
 let auditScanning = false;
+
+
+  
 
 async function toggleAuditScan() {
 
   const btn = document.getElementById("auditScanBtn");
+
+  // STOP NORMAL SCANNER FIRST
+  await stopNormalScanner();
+
 
   if (auditScanning) {
 
@@ -1458,6 +1486,28 @@ async function toggleAuditScan() {
   );
 
 }
+
+ async function stopAuditScanner(){
+
+  if(auditScanner){
+
+    try{
+      await auditScanner.stop();
+      await auditScanner.clear();
+    }
+    catch(e){
+      console.log("Audit scanner stop:", e);
+    }
+
+    auditScanner=null;
+  }
+
+  auditScanning=false;
+
+} 
+
+  
+  
 
   function showAuditResult(data){
 
@@ -2316,6 +2366,8 @@ async function sendSelectedReport() {
   `;
 
 }
+
+  
 
 
 
