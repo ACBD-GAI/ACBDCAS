@@ -1296,13 +1296,13 @@ try {
             }
 
             // Auto zoom if supported
-            if (capabilities.zoom) {
+           if (capabilities.zoom) {
 
-                await track.applyConstraints({
-                    advanced: [{
-                        zoom: capabilities.zoom.max
-                    }]
-                });
+    await track.applyConstraints({
+        advanced: [{
+            zoom: capabilities.zoom.min
+        }]
+    });
 
                 console.log("Camera zoom enabled");
             }
