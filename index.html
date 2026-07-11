@@ -1419,28 +1419,43 @@ async function toggleAuditScan() {
     auditScanning = false;
     btn.innerHTML = "📷 START AUDIT";
 
-    if (auditScanner) {
-      try {
-        await auditScanner.stop();
-        await auditScanner.clear();
-      } catch(e){}
-    }
+ if (auditScanner) {
+  try {
+    await auditScanner.stop();
+    await auditScanner.clear();
+  } catch(e){}
+}
+
+document.getElementById("auditReader").style.display = "none";
 
     return;
   }
 
-  auditScanning = true;
-  btn.innerHTML = "⏹ STOP AUDIT";
+ auditScanning = true;
+btn.innerHTML = "⏹ STOP AUDIT";
 
-  auditScanner = new Html5Qrcode("auditReader");
+document.getElementById("auditReader").style.display = "block";
+
+auditScanner = new Html5Qrcode("auditReader");
 
   const cameras = await Html5Qrcode.getCameras();
 
-  const cameraId = cameras.length
-      ? cameras[cameras.length-1].id
-      : { facingMode:"environment" };
+ let cameraId = cameras[0].id;
 
-  await auditScanner.start(
+for (let cam of cameras) {
+
+  let label = (cam.label || "").toLowerCase();
+
+  if(label.includes("back") || label.includes("rear")){
+    cameraId = cam.id;
+    break;
+  }
+
+}
+
+try {
+
+await auditScanner.start(
 
     cameraId,
 
@@ -1457,7 +1472,6 @@ async function toggleAuditScan() {
   async(decodedText)=>{
 
   if(!auditScanning) return;
-
 
   auditCount++;
 
@@ -1483,7 +1497,21 @@ async function toggleAuditScan() {
 },
 
     ()=>{}
-  );
+
+);
+
+}
+catch(e){
+
+console.log("AUDIT CAMERA ERROR:", e);
+
+alert("Cannot start audit camera:\n" + e);
+
+auditScanning=false;
+
+btn.innerHTML="🔄 RE-INVENTORY";
+
+document.getElementById("auditReader").style.display="none";
 
 }
 
