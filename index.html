@@ -1296,11 +1296,13 @@ try {
             }
 
             // Auto zoom if supported
-           if (capabilities.zoom) {
+       if (capabilities.zoom) {
+
+    const desiredZoom = 2.0;  
 
     await track.applyConstraints({
         advanced: [{
-            zoom: capabilities.zoom.min
+            zoom: desiredZoom
         }]
     });
 
