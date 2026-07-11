@@ -1176,75 +1176,147 @@ for (let d of devices) {
   }
 }
 
-  scanner = new Html5Qrcode("reader");
+ scanner = new Html5Qrcode("reader");
 
-  await scanner.start(
-    cameraId,
-    { fps: 10, qrbox: 250 },
+await scanner.start(
+    {
+        deviceId: { exact: cameraId }
+    },
+    {
+        fps: 20,
+        qrbox: {
+            width: 300,
+            height: 300
+        },
+        aspectRatio: 1.0,
+        videoConstraints: {
+            facingMode: "environment",
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+        }
+    },
     async (code) => {
 
-      if (!isScanning) return;
+        if (!isScanning) return;
 
-      isScanning = false;
-      await scanner.stop();
-      await scanner.clear();
-      scanner = null;
-      setUIScanning(false);
+        isScanning = false;
+        await scanner.stop();
+        await scanner.clear();
+        scanner = null;
+        setUIScanning(false);
 
-      beep();
-      vibrate();
+        beep();
+        vibrate();
 
-      tempCode = code;
-      tempSi = siNo;
+        tempCode = code;
+        tempSi = siNo;
 
-      const res = await fetch(
-  API_URL +
-  "?action=check" +
-  "&barcode=" + encodeURIComponent(code) +
-  getSessionParams()
-);
-      const data = await res.json();
+        const res = await fetch(
+            API_URL +
+            "?action=check" +
+            "&barcode=" + encodeURIComponent(code) +
+            getSessionParams()
+        );
 
-      let row = data.row || [];
-      let colJ = data.colJ || row?.[9] || "";
-      let colO = data.colO || row?.[14] || "";
+        const data = await res.json();
 
-      if (data.status === "FOUND") {
-        document.getElementById("result").innerHTML = `
-          <div class="card green scan-animate">
-            ✅ AVAILABLE<br><br>
-            <b>${colO}</b><br>
-            ${colJ ? `<small>${colJ}</small><br>` : ""}
-            <b>${code}</b><br>
-            <br>
-            <button id="saveBtn" class="btn-blue" onclick="saveYes()">ADD TO SOLD</button>
-            <button class="btn-orange" onclick="cancelNo()">CANCEL</button>
-          </div>
-        `;
-      }
+        let row = data.row || [];
+        let colJ = data.colJ || row?.[9] || "";
+        let colO = data.colO || row?.[14] || "";
 
-     else if (data.status === "DUPLICATE") {
-  document.getElementById("result").innerHTML = `
-    <div class="card red">
-      🛑 ALREADY SOLD<br><br>
-      <b>${colO}</b><br>
-      ${colJ ? `<small>${colJ}</small><br>` : ""}
-      <b>${code}</b>
-    </div>
-  `;
-}
+        if (data.status === "FOUND") {
+            document.getElementById("result").innerHTML = `
+                <div class="card green scan-animate">
+                    ✅ AVAILABLE<br><br>
+                    <b>${colO}</b><br>
+                    ${colJ ? `<small>${colJ}</small><br>` : ""}
+                    <b>${code}</b><br><br>
 
-      else {
-        document.getElementById("result").innerHTML = `
-          <div class="no-results">
-            ❌ NOT FOUND </div><br>
-            <b>${colO}</b><br>
-            ${colJ ? `<small>${colJ}</small>` : ""}
-         
-        `;
-      }
+                    <button id="saveBtn"
+                        class="btn-blue"
+                        onclick="saveYes()">
+                        ADD TO SOLD
+                    </button>
+
+                    <button class="btn-orange"
+                        onclick="cancelNo()">
+                        CANCEL
+                    </button>
+                </div>
+            `;
+        }
+        else if (data.status === "DUPLICATE") {
+            document.getElementById("result").innerHTML = `
+                <div class="card red">
+                    🛑 ALREADY SOLD<br><br>
+                    <b>${colO}</b><br>
+                    ${colJ ? `<small>${colJ}</small><br>` : ""}
+                    <b>${code}</b>
+                </div>
+            `;
+        }
+        else {
+            document.getElementById("result").innerHTML = `
+                <div class="no-results">
+                    ❌ NOT FOUND
+                </div><br>
+                <b>${colO}</b><br>
+                ${colJ ? `<small>${colJ}</small>` : ""}
+            `;
+        }
     }
-  );
+);
+
+// ================= CAMERA IMPROVEMENTS =================
+
+try {
+
+    const video = document.querySelector("#reader video");
+
+    if (video && video.srcObject) {
+
+        const track = video.srcObject.getVideoTracks()[0];
+
+        if (track) {
+
+            const capabilities = track.getCapabilities();
+
+            // Continuous autofocus
+            if (
+                capabilities.focusMode &&
+                capabilities.focusMode.includes("continuous")
+            ) {
+                await track.applyConstraints({
+                    advanced: [{
+                        focusMode: "continuous"
+                    }]
+                });
+
+                console.log("Continuous autofocus enabled");
+            }
+
+            // Auto zoom if supported
+            if (capabilities.zoom) {
+
+                await track.applyConstraints({
+                    advanced: [{
+                        zoom: capabilities.zoom.max
+                    }]
+                });
+
+                console.log("Camera zoom enabled");
+            }
+
+        }
+
+    }
+
+}
+catch (e) {
+
+    console.log("Camera features not supported:", e);
+
+}
 }
 async function saveYes() {
 
