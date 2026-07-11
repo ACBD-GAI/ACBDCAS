@@ -673,6 +673,13 @@ disabled>
 🏷 ADD VIA TAG NUMBER
 </button>
 
+<button
+id="auditBtn"
+class="btn-orange"
+onclick="toggleAuditScan()">
+🔄 RE-INVENTORY
+</button>
+
 <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
 
 <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
@@ -851,6 +858,7 @@ CANCEL
   
 <script>
 
+  let auditMode = false;
 let scanner = null;
 let isScanning = false;
 let isSaving = false;
