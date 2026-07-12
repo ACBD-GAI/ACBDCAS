@@ -593,6 +593,16 @@ margin-top:10px;
 
     backdrop-filter: blur(10px);
 }
+
+  .button-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.button-grid button{
+  width:100%;
+}
   
 </style>
 </head>
@@ -681,19 +691,7 @@ VERIFY OTP
 
     <input id="siNo" placeholder="Enter SI No">
 
-    <button id="scanBtn" class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
-    
-    <button
-id="auditScanBtn"
-class="btn-orange"
-onclick="toggleAuditScan()">
-🔄 RE-INVENTORY
-</button>
-
-<!-- SCANNING SECTION -->
-<div class="button-section">
-
-<h4>📷 SCANNING</h4>
+   <div class="button-grid">
 
 <button id="scanBtn" class="btn-blue" onclick="toggleScan()">
 📷 START SCAN
@@ -712,6 +710,22 @@ class="btn-blue"
 onclick="showTagDialog()"
 disabled>
 🏷 ADD VIA TAG NUMBER
+</button>
+
+<button class="btn-blue" onclick="searchSI()">
+🔍 SEARCH SI
+</button>
+
+<button class="btn-orange" onclick="refreshPage()">
+♻ REFRESH
+</button>
+
+<button
+id="reportBtn"
+class="btn-blue"
+onclick="showReportDialog()"
+style="display:none;">
+📧 SEND REPORT
 </button>
 
 </div>
