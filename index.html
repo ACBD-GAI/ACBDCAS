@@ -894,7 +894,7 @@ let lastAuditBarcode = "";
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwRoI5Gp56uMmbfWWOlhxWed_uJ5Q_7iJulnkSJ8TtMgpApnENIRY4TCNcoJe7V_yz9/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwOmeb5Eh_0VEa4k7s6KAdVJlcfEvpWN92C_fgaGJzsGNfe3kp_6GOmv3Hqi836NxVW/exec";
 
 function getSessionParams(){
 
@@ -1473,13 +1473,6 @@ await auditScanner.start(
 
   if(!auditScanning) return;
 
-  auditCount++;
-
-  document.getElementById("auditCounter").style.display="block";
-
-  document.getElementById("auditCounter").innerHTML =
-  "Scanned : " + auditCount;
-
 
   const res = await fetch(
     API_URL +
@@ -1492,10 +1485,55 @@ await auditScanner.start(
   const data = await res.json();
 
 
-  showAuditResult(data);
+  // ONLY COUNT SUCCESSFUL NEW AUDIT
+  if(data.status === "FOUND"){
+
+    auditCount++;
+
+    document.getElementById("auditCounter").style.display="block";
+
+    document.getElementById("auditCounter").innerHTML =
+    "Scanned : " + auditCount;
+
+
+    // AUTO SAVE WITHOUT CONFIRMATION
+    await saveAudit(decodedText);
+
+
+  }
+  else if(data.status === "ALREADY_AUDITED"){
+
+    document.getElementById("result").innerHTML = `
+
+    <div class="card red">
+
+    🛑 ALREADY AUDITED
+
+    <br><br>
+
+    ${decodedText}
+
+    </div>
+
+    `;
+
+  }
+  else {
+
+    document.getElementById("result").innerHTML = `
+
+    <div class="no-results">
+
+    ❌ ITEM NOT FOUND
+
+    </div>
+
+    `;
+
+  }
+
 
 },
-
     ()=>{}
 
 );
@@ -1538,69 +1576,7 @@ document.getElementById("auditReader").style.display="none";
   
   
 
-  function showAuditResult(data){
-
-if(data.status==="FOUND"){
-
-document.getElementById("result").innerHTML=`
-
-<div class="card green scan-animate">
-
-✅ AVAILABLE FOR AUDIT
-
-<br><br>
-
-<b>${data.row[14]}</b><br>
-
-${data.row[9] || ""}
-
-<br><br>
-
-<button
-class="btn-blue"
-onclick="saveAudit('${data.row[11]}-${data.row[12]}')">
-
-CONFIRM AUDIT
-
-</button>
-
-</div>
-
-`;
-
-}
-
-
-else if(data.status==="ALREADY_AUDITED"){
-
-document.getElementById("result").innerHTML=`
-
-<div class="card red">
-
-🛑 ALREADY AUDITED
-
-</div>
-
-`;
-
-}
-
-
-else{
-
-document.getElementById("result").innerHTML=`
-
-<div class="no-results">
-
-❌ ITEM NOT FOUND
-
-</div>
-
-`;
-
-}
-
-}
+  
 
 
   async function saveAudit(barcode){
@@ -1620,14 +1596,19 @@ if(data.status==="RECORDED"){
 
 document.getElementById("result").innerHTML=`
 
-<div class="card green">
+<div class="card green scan-animate">
 
 ✅ AUDIT RECORDED
 
 <br><br>
 
-${data.colO}<br>
+<b>${data.colO}</b><br>
+
 ${data.colJ}
+
+<br><br>
+
+${barcode}
 
 </div>
 
