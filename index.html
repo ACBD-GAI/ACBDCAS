@@ -690,6 +690,22 @@ onclick="toggleAuditScan()">
 🔄 RE-INVENTORY
 </button>
 
+<!-- SCANNING SECTION -->
+<div class="button-section">
+
+<h4>📷 SCANNING</h4>
+
+<button id="scanBtn" class="btn-blue" onclick="toggleScan()">
+📷 START SCAN
+</button>
+
+<button
+id="auditScanBtn"
+class="btn-orange"
+onclick="toggleAuditScan()">
+🔄 RE-INVENTORY
+</button>
+
 <button 
 id="tagBtn"
 class="btn-blue"
@@ -698,13 +714,22 @@ disabled>
 🏷 ADD VIA TAG NUMBER
 </button>
 
+</div>
 
 
+<!-- TOOLS SECTION -->
+<div class="button-section">
 
+<h4>🛠 TOOLS</h4>
 
-<button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
+<button class="btn-blue" onclick="searchSI()">
+🔍 SEARCH SI
+</button>
 
-<button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
+<button class="btn-orange" onclick="refreshPage()">
+♻ REFRESH
+</button>
+
 <button
 id="reportBtn"
 class="btn-blue"
@@ -712,6 +737,8 @@ onclick="showReportDialog()"
 style="display:none;">
 📧 SEND REPORT
 </button>
+
+</div>
 
    <div id="searchResult"></div>
 
