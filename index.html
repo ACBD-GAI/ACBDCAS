@@ -1427,6 +1427,7 @@ let auditScanning = false;
 async function toggleAuditScan() {
 
   const btn = document.getElementById("auditScanBtn");
+  const scanBtn = document.getElementById("scanBtn");
 
   // STOP NORMAL SCANNER FIRST
   await stopNormalScanner();
@@ -1436,6 +1437,9 @@ async function toggleAuditScan() {
 
     auditScanning = false;
     btn.innerHTML = "📷 START AUDIT";
+    scanBtn.disabled = false;
+scanBtn.style.opacity = "1";
+scanBtn.style.cursor = "pointer";
 
  if (auditScanner) {
   try {
@@ -1451,6 +1455,10 @@ document.getElementById("auditReader").style.display = "none";
 
  auditScanning = true;
 btn.innerHTML = "⏹ STOP AUDIT";
+  
+  scanBtn.disabled = true;
+scanBtn.style.opacity = "0.5";
+scanBtn.style.cursor = "not-allowed";
 
 document.getElementById("auditReader").style.display = "block";
 
@@ -1821,6 +1829,10 @@ auditBusy = false;
 
 document.getElementById("auditReader").style.display = "none";
 document.getElementById("auditScanBtn").innerHTML = "🔄 RE-INVENTORY";
+
+  document.getElementById("scanBtn").disabled = false;
+document.getElementById("scanBtn").style.opacity = "1";
+document.getElementById("scanBtn").style.cursor = "pointer";
 
 
   // Clear inputs
