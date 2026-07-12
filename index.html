@@ -871,6 +871,7 @@ CANCEL
 
   
 <script>
+  let auditBusy = false;
 
 
   const BRANCH="CAS";
@@ -1450,67 +1451,59 @@ await auditScanner.start(
       }
     },
 
-  async(decodedText)=>{
+async(decodedText)=>{
 
   if(!auditScanning) return;
-     beep();
+
+  if(auditBusy) return;
+
+  auditBusy = true;
+
+  beep();
   vibrate();
 
+  try{
 
-  const res = await fetch(
-    
-    API_URL +
-    "?action=checkAudit" +
-    "&barcode=" + encodeURIComponent(decodedText) +
-    getSessionParams()
-  );
+    const res = await fetch(
+      API_URL +
+      "?action=checkAudit" +
+      "&barcode=" + encodeURIComponent(decodedText) +
+      getSessionParams()
+    );
 
+    const data = await res.json();
 
-  const data = await res.json();
+    if(data.status === "FOUND"){
 
+      await saveAudit(decodedText);
 
+    }else if(data.status === "ALREADY_AUDITED"){
 
- // AUTO SAVE WITHOUT COUNT DISPLAY
-if(data.status === "FOUND"){
+      document.getElementById("result").innerHTML = `
+      <div class="card red">
+      🛑 ALREADY AUDITED
+      <br><br>
+      ${decodedText}
+      </div>
+      `;
 
-    await saveAudit(decodedText);
+    }else{
 
-}  else if(data.status === "ALREADY_AUDITED"){
+      document.getElementById("result").innerHTML = `
+      <div class="no-results">
+      ❌ ITEM NOT FOUND
+      </div>
+      `;
 
-    document.getElementById("result").innerHTML = `
+    }
 
-    <div class="card red">
+  }finally{
 
-    🛑 ALREADY AUDITED
-
-    <br><br>
-
-    ${decodedText}
-
-    </div>
-
-    `;
-
-  }
-  else {
-
-    document.getElementById("result").innerHTML = `
-
-    <div class="no-results">
-
-    ❌ ITEM NOT FOUND
-
-    </div>
-
-    `;
+    setTimeout(()=>{
+      auditBusy = false;
+    },1000);
 
   }
-
-
-},
-    ()=>{}
-
-);
 
 }
 catch(e){
