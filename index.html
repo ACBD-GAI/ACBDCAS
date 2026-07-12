@@ -912,7 +912,7 @@ let lastAuditBarcode = "";
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzrDuSMT7ukbsmlf0YyJ1iZ_cuxIhTT92WE_w_BpttGxzMd8VRP2MIAWVMDVQU6NQjv/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw0Q0muuLvaHTt7Ae9Qe84us2Sh78gF4jlZBSZF1ZHAVs3nMDlj3Wq4WsHyt_lf7Hs7/exec";
 
 function getSessionParams(){
 
@@ -1471,7 +1471,7 @@ await auditScanner.start(
 
     {
       fps:10,
-      qrbox:{width:250,height:250},
+      qrbox:{width:300,height:300},
       aspectRatio:1,
 
       experimentalFeatures:{
@@ -1529,7 +1529,7 @@ async(decodedText)=>{
 
     setTimeout(()=>{
       auditBusy = false;
-    },1000);
+    },300);
 
   }
 
