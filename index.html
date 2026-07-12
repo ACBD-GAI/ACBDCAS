@@ -692,18 +692,7 @@ disabled>
 
 
 
-    <div
-id="auditCounter"
-style="
-display:none;
-margin-top:10px;
-text-align:center;
-font-size:18px;
-font-weight:bold;
-color:#1976d2;
-">
-Scanned : 0
-</div>
+
 
 <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
 
@@ -1472,9 +1461,12 @@ await auditScanner.start(
   async(decodedText)=>{
 
   if(!auditScanning) return;
+     beep();
+  vibrate();
 
 
   const res = await fetch(
+    
     API_URL +
     "?action=checkAudit" +
     "&barcode=" + encodeURIComponent(decodedText) +
@@ -1485,23 +1477,13 @@ await auditScanner.start(
   const data = await res.json();
 
 
-  // ONLY COUNT SUCCESSFUL NEW AUDIT
-  if(data.status === "FOUND"){
 
-    auditCount++;
+ // AUTO SAVE WITHOUT COUNT DISPLAY
+if(data.status === "FOUND"){
 
-    document.getElementById("auditCounter").style.display="block";
-
-    document.getElementById("auditCounter").innerHTML =
-    "Scanned : " + auditCount;
-
-
-    // AUTO SAVE WITHOUT CONFIRMATION
     await saveAudit(decodedText);
 
-
-  }
-  else if(data.status === "ALREADY_AUDITED"){
+}  else if(data.status === "ALREADY_AUDITED"){
 
     document.getElementById("result").innerHTML = `
 
