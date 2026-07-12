@@ -1767,6 +1767,25 @@ async function refreshPage() {
 
   setUIScanning(false);
 
+  // Stop audit scanner if running
+if(auditScanner){
+  try{
+    await auditScanner.stop();
+    await auditScanner.clear();
+  }
+  catch(e){
+    console.log(e);
+  }
+
+  auditScanner = null;
+}
+
+auditScanning = false;
+auditBusy = false;
+
+document.getElementById("auditReader").style.display = "none";
+document.getElementById("auditScanBtn").innerHTML = "🔄 RE-INVENTORY";
+
 
   // Clear inputs
   document.getElementById("tagNumberInput").value = "";
