@@ -657,19 +657,28 @@ VERIFY OTP
     <button class="logout-btn" onclick="logout()">Logout</button>
 
 </div>
-  <div class="container">
+ <div class="container">
 
+    <!-- RESULT AREA -->
+    <div id="result"></div>
+
+    <!-- SEARCH RESULT -->
+    <div id="searchResult"></div>
+
+    <!-- QR SCANNER -->
     <div id="reader" style="display:none;"></div>
-    <div id="auditReader" 
-style="
-display:none;
-width:100%;
-max-width:360px;
-margin:auto;
-border-radius:15px;
-overflow:hidden;
-">
-</div>
+
+    <!-- AUDIT SCANNER -->
+    <div id="auditReader"
+    style="
+    display:none;
+    width:100%;
+    max-width:360px;
+    margin:auto;
+    border-radius:15px;
+    overflow:hidden;
+    ">
+    </div>
 
     <input id="siNo" placeholder="Enter SI No">
 
@@ -705,8 +714,7 @@ style="display:none;">
 📧 SEND REPORT
 </button>
 
-    <p id="result"></p>
-    <div id="searchResult"></div>
+   
 
   </div>
 <div id="reportDialog" class="report-overlay">
