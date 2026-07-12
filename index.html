@@ -883,7 +883,7 @@ let lastAuditBarcode = "";
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbze2X-xdXINA7Tio2dkw4ymkYDXE89BzKbKmdajrLSsImNC85MDQMm6Jkv0KnUttb2K/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby9-couPTUCJzJwV3_fgA6sRy423OZL1VGWEUNaB9ewfqHspsjjczl_dY9DCeDg87Sa/exec";
 
 function getSessionParams(){
 
@@ -902,37 +902,29 @@ return (
 }
 function checkReportAccess(){
 
-  const email = localStorage
-    .getItem("inventoryEmail")
-    ?.toLowerCase();
+  const session = JSON.parse(
+    localStorage.getItem("inventorySession_" + BRANCH) || "{}"
+  );
 
+  const email = (session.email || "").trim().toLowerCase();
 
-  const reportBtn =
-    document.getElementById("reportBtn");
-
+  const reportBtn = document.getElementById("reportBtn");
 
   if(!reportBtn) return;
-
 
   const REPORT_USERS = [
     "remnvill@gmail.com",
     "willremn@gmail.com",
     "fmfc_audit654@yahoo.com",
-  "fmfc_ho2016@yahoo.com",
+    "fmfc_ho2016@yahoo.com",
     "fmfc_philippines@yahoo.com",
     "mmlorijo1990@gmail.com"
   ];
 
-
   if(REPORT_USERS.includes(email)){
-
     reportBtn.style.display = "block";
-
-  }
-  else{
-
+  }else{
     reportBtn.style.display = "none";
-
   }
 
 }
