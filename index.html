@@ -775,9 +775,34 @@ style="display:none;">
             📧 Send Inventory Report
         </div>
 
-        <div class="report-subtitle">
-            Choose recipient(s)
-        </div>
+       <div class="report-subtitle">
+    Select Report Type
+</div>
+
+<div style="margin-bottom:18px;">
+
+<label style="display:block;margin-bottom:8px;font-weight:bold;">
+<input
+type="radio"
+name="reportType"
+value="sales"
+checked>
+📊 Sales Report
+</label>
+
+<label style="display:block;font-weight:bold;">
+<input
+type="radio"
+name="reportType"
+value="reinventory">
+📦 Re-Inventory Report
+</label>
+
+</div>
+
+<div class="report-subtitle">
+    Choose recipient(s)
+</div>
 
         <div class="recipient-card" data-email="remnvill@gmail.com">
             <div class="recipient-icon">👤</div>
@@ -928,7 +953,7 @@ let lastAuditBarcode = "";
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyShamuwpn-OXpmioIoyCfJF2yF0E4v6hUh4-oGVi7TRWjRqtGFGNoL6XUT9ggjfB9d/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwDC8sxAnry7KrD3uzEif6uRV1TzQyY4Faj9kgX3OAg1evkLXs02pttIlWO-0nJlBSe/exec";
 
 function getSessionParams(){
 
@@ -2361,10 +2386,17 @@ async function sendSelectedReport() {
 
     try {
 
-        const res = await fetch(
+        const reportType =
+document.querySelector(
+'input[name="reportType"]:checked'
+).value;
+
+
+const res = await fetch(
 
             API_URL +
             "?action=sendReport" +
+            "&type=" + encodeURIComponent(reportType) +
             "&emails=" + encodeURIComponent(emails) +
             getSessionParams()
 
