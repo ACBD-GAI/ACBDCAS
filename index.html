@@ -2381,11 +2381,8 @@ async function sendSelectedReport() {
 
     try {
 
-        const reportType =
-document.querySelector(
-'input[name="reportType"]:checked'
-).value;
-
+const reportType =
+document.getElementById("reportType").value;
 
 const res = await fetch(
 
