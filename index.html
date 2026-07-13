@@ -775,61 +775,26 @@ style="display:none;">
             📧 Send Inventory Report
         </div>
 
-       <div class="report-subtitle">
-    Select Report Type
-</div>
+     <select id="reportType" 
+style="
+width:100%;
+padding:14px;
+border-radius:12px;
+border:1px solid #ddd;
+font-size:16px;
+font-weight:bold;
+margin-bottom:20px;
+">
 
-<div class="report-type-box">
+<option value="sales">
+📊 Sales Report
+</option>
 
-<label class="report-type-card">
-<input
-type="radio"
-name="reportType"
-value="sales"
-checked>
+<option value="reinventory">
+📦 Re-Inventory Report
+</option>
 
-<div class="report-type-icon">
-📊
-</div>
-
-<div>
-<div class="report-type-title">
-Sales Report
-</div>
-
-<div class="report-type-desc">
-Sold & Available Stocks
-</div>
-</div>
-
-</label>
-
-
-<label class="report-type-card">
-
-<input
-type="radio"
-name="reportType"
-value="reinventory">
-
-<div class="report-type-icon">
-📦
-</div>
-
-<div>
-<div class="report-type-title">
-Re-Inventory Report
-</div>
-
-<div class="report-type-desc">
-Available & Missing Items
-</div>
-</div>
-
-</label>
-
-</div>
-
+</select>
 <div class="report-subtitle">
     Choose recipient(s)
 </div>
