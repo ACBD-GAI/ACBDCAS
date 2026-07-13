@@ -757,6 +757,20 @@ onclick="showReportDialog()"
 style="display:none;">
 📧 SEND REPORT
 </button>
+     <button
+id="updateStockBtn"
+class="btn-orange"
+onclick="document.getElementById('stockFile').click()"
+style="display:none;">
+📤 UPDATE STOCKS
+</button>
+
+<input
+type="file"
+id="stockFile"
+accept=".xlsx,.xls"
+style="display:none"
+onchange="uploadStockFile(this.files[0])">
 
 </div>
 
@@ -943,12 +957,17 @@ CANCEL
 let scanner = null;
 let isScanning = false;
 let isSaving = false;
-let auditCount = 0;
+
 let lastAuditBarcode = "";
 let tempCode = "";
 let tempSi = "";
+const STOCK_ADMIN = [
+  "remnvill@gmail.com",
+  "fmfc_audit654@yahoo.com"
+];
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxHssyw63rlJjgrzUfmsFkhnhcZPZOYYgv-sZCNG4F0QVoNHnrJp2kqguNTtymOkJNp/exec";
+
+const API_URL = "https://script.google.com/macros/s/AKfycbz_uSjQFIFRvcUn1rj8rmM7rc5I4u4lBgxXTAl5xKgjnzb1kTZq8zHcuigEY8wBBv9e/exec";
 
 function getSessionParams(){
 
@@ -974,25 +993,40 @@ function checkReportAccess(){
   const email = (session.email || "").trim().toLowerCase();
 
   const reportBtn = document.getElementById("reportBtn");
-
-  if(!reportBtn) return;
+  const updateBtn = document.getElementById("updateStockBtn");
 
   const REPORT_USERS = [
     "remnvill@gmail.com",
     "willremn@gmail.com",
     "fmfc_audit654@yahoo.com",
     "fmfc_ho2016@yahoo.com",
-   
     "mmlorijo1990@gmail.com"
   ];
 
-  if(REPORT_USERS.includes(email)){
-    reportBtn.style.display = "block";
-  }else{
-    reportBtn.style.display = "none";
+  if(reportBtn){
+    reportBtn.style.display =
+      REPORT_USERS.includes(email) ? "block" : "none";
+  }
+
+  if(updateBtn){
+    updateBtn.style.display =
+      STOCK_ADMIN.includes(email) ? "block" : "none";
   }
 
 }
+
+function checkStockAccess(){
+
+  const session = JSON.parse(
+    localStorage.getItem("inventorySession_" + BRANCH) || "{}"
+  );
+
+  const email = (session.email || "").trim().toLowerCase();
+
+  return STOCK_ADMIN.includes(email);
+
+}
+  
   
 
 /* ================= LOGIN ================= */
@@ -1464,22 +1498,31 @@ async function toggleAuditScan() {
   if (auditScanning) {
 
     auditScanning = false;
-    btn.innerHTML = "📷 START AUDIT";
+    btn.innerHTML = "🔄 RE-INVENTORY";
     scanBtn.disabled = false;
 scanBtn.style.opacity = "1";
 scanBtn.style.cursor = "pointer";
 
  if (auditScanner) {
+
   try {
+
     await auditScanner.stop();
     await auditScanner.clear();
-  } catch(e){}
+
+  } catch(e){
+
+    console.log(e);
+
+  }
+
+  auditScanner = null;
+
 }
 
 document.getElementById("auditReader").style.display = "none";
 
-    return;
-  }
+return;
 
  auditScanning = true;
 btn.innerHTML = "⏹ STOP AUDIT";
@@ -1509,9 +1552,13 @@ for (let cam of cameras) {
 
 try {
 
+try {
+
 await auditScanner.start(
 
-    cameraId,
+    {
+      deviceId: { exact: cameraId }
+    },
 
     {
       fps:10,
@@ -1522,7 +1569,6 @@ await auditScanner.start(
         useBarCodeDetectorIfSupported:true
       }
     },
-
 async(decodedText)=>{
 
   if(!auditScanning) return;
@@ -1822,18 +1868,37 @@ function cancelNo() {
 
 async function refreshPage() {
 
-  // Stop camera if still running
-  if(scanner){
-    try{
-      await scanner.stop();
-      await scanner.clear();
-    }
-    catch(e){
-      console.log(e);
-    }
+ // STOP NORMAL CAMERA
+if(scanner){
 
-    scanner = null;
-  }
+try{
+
+await scanner.stop();
+await scanner.clear();
+
+}catch(e){}
+
+scanner=null;
+
+}
+
+
+// STOP AUDIT CAMERA
+if(auditScanner){
+
+try{
+
+await auditScanner.stop();
+await auditScanner.clear();
+
+}catch(e){}
+
+auditScanner=null;
+
+}
+
+auditScanning=false;
+auditBusy=false;
 
   isScanning = false;
 
@@ -2441,6 +2506,14 @@ const res = await fetch(
   </div>
 
   `;
+
+}
+
+  async function uploadStockFile(file){
+
+    if(!file) return;
+
+    alert(file.name);
 
 }
 
