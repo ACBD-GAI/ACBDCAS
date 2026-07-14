@@ -976,7 +976,7 @@ const STOCK_ADMIN = [
 ];
 
 
-const API_URL = "https://script.google.com/macros/s/AKfycbz_uSjQFIFRvcUn1rj8rmM7rc5I4u4lBgxXTAl5xKgjnzb1kTZq8zHcuigEY8wBBv9e/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxmkBp8W8Gk_YxYMyppQC3578xS3ML-odgBpBZ4Y5Zc8n4S_J4HSjDbgly2FSEu2lUX/exec";
 
 function getSessionParams(){
 
@@ -2733,11 +2733,67 @@ const res = await fetch(
 
 }
 
-  async function uploadStockFile(file){
+ async function uploadStockFile(file){
 
     if(!file) return;
 
-    alert(file.name);
+
+    if(!checkStockAccess()){
+        alert("❌ NO ACCESS");
+        return;
+    }
+
+
+    const reader = new FileReader();
+
+
+    reader.onload = async function(e){
+
+        const base64 = e.target.result.split(",")[1];
+
+
+        const res = await fetch(
+            API_URL,
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/x-www-form-urlencoded"
+                },
+                body:
+                "action=uploadStock" +
+                "&file=" + encodeURIComponent(base64) +
+                "&fileName=" + encodeURIComponent(file.name) +
+                getSessionParams()
+            }
+        );
+
+
+        const data = await res.json();
+
+
+        if(data.status==="OK"){
+
+            alert(
+              "✅ STOCK UPDATED\n\nRows: "
+              + data.rows
+            );
+
+            refreshPage();
+
+        }
+        else{
+
+            alert(
+              "❌ ERROR\n\n"
+              + data.status
+            );
+
+        }
+
+    };
+
+
+    reader.readAsDataURL(file);
 
 }
 
