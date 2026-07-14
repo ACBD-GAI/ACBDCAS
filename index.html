@@ -976,7 +976,7 @@ const STOCK_ADMIN = [
 ];
 
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwy8sTeitVHgQ9EosNsUxHjmyukApE7H4iF_qp1OS6WcVWpKB9csLCOCtGDPpqm_EjT/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzq9lPAiEhIVmhte5LFUnVxdy1LZfy0dsU9qww4QwzObQIc81Vbj5bHs7nRTifyXMFH/exec";
 
 function getSessionParams(){
 
@@ -2735,12 +2735,44 @@ const res = await fetch(
 
  async function uploadStockFile(file){
 
-    if(!file) return;
+    if(!file){
+        alert("❌ No file selected");
+        return;
+    }
 
 
     if(!checkStockAccess()){
+
         alert("❌ NO ACCESS");
         return;
+
+    }
+
+
+    // Check file type
+    const allowed = [
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel"
+    ];
+
+    if(!allowed.includes(file.type)){
+
+        alert("❌ Please upload Excel file only");
+
+        return;
+
+    }
+
+
+    // Optional size check
+    if(file.size > 10 * 1024 * 1024){
+
+        alert(
+          "❌ File too large\n\nMaximum 10MB"
+        );
+
+        return;
+
     }
 
 
@@ -2749,51 +2781,185 @@ const res = await fetch(
 
     reader.onload = async function(e){
 
-        const base64 = e.target.result.split(",")[1];
+        try {
 
 
-        const res = await fetch(
-            API_URL,
-            {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/x-www-form-urlencoded"
-                },
-                body:
-                "action=uploadStock" +
-                "&file=" + encodeURIComponent(base64) +
-                "&fileName=" + encodeURIComponent(file.name) +
-                getSessionParams()
+            // REMOVE DATA URL HEADER
+            const base64 =
+            e.target.result.split(",")[1];
+
+
+            const params =
+            new URLSearchParams();
+
+
+            params.append(
+                "action",
+                "uploadStock"
+            );
+
+
+            params.append(
+                "file",
+                base64
+            );
+
+
+            params.append(
+                "fileName",
+                file.name
+            );
+
+
+            const session =
+            JSON.parse(
+            localStorage.getItem(
+                "inventorySession_"+BRANCH
+            ) || "{}"
+            );
+
+
+            params.append(
+                "email",
+                session.email || ""
+            );
+
+
+            params.append(
+                "sessionId",
+                session.sessionId || ""
+            );
+
+
+            document.getElementById("result").innerHTML = `
+
+            <div class="card saving">
+
+            <div class="spinner"></div>
+
+            Uploading stock file...
+
+            </div>
+
+            `;
+
+
+
+            const res = await fetch(
+                API_URL,
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                        "application/x-www-form-urlencoded;charset=UTF-8"
+                    },
+
+                    body:params.toString()
+
+                }
+            );
+
+
+
+            const data = await res.json();
+
+
+
+            console.log(
+                "UPLOAD RESPONSE:",
+                data
+            );
+
+
+
+            if(data.status === "OK"){
+
+
+                document.getElementById("result").innerHTML = `
+
+                <div class="card green">
+
+                ✅ STOCK UPDATED
+
+                <br><br>
+
+                Rows:
+                <b>${data.rows}</b>
+
+                </div>
+
+                `;
+
+
+                refreshPage();
+
+
             }
+            else{
+
+
+                document.getElementById("result").innerHTML = `
+
+                <div class="card red">
+
+                ❌ UPLOAD FAILED
+
+                <br><br>
+
+                ${data.status}
+
+                </div>
+
+                `;
+
+
+            }
+
+
+
+        }
+        catch(err){
+
+
+            console.error(
+                "UPLOAD ERROR:",
+                err
+            );
+
+
+            document.getElementById("result").innerHTML = `
+
+            <div class="card red">
+
+            ❌ UPLOAD ERROR
+
+            <br><br>
+
+            ${err.message}
+
+            </div>
+
+            `;
+
+
+        }
+
+
+    };
+
+
+    reader.onerror = function(){
+
+        alert(
+          "❌ Cannot read file"
         );
-
-
-        const data = await res.json();
-
-
-        if(data.status==="OK"){
-
-            alert(
-              "✅ STOCK UPDATED\n\nRows: "
-              + data.rows
-            );
-
-            refreshPage();
-
-        }
-        else{
-
-            alert(
-              "❌ ERROR\n\n"
-              + data.status
-            );
-
-        }
 
     };
 
 
     reader.readAsDataURL(file);
+
 
 }
 
