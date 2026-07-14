@@ -2862,14 +2862,27 @@ const res = await fetch(
 
 
 
-            const data = await res.json();
+         const text = await res.text();
 
+console.log("RAW SERVER RESPONSE:");
+console.log(text);
 
+let data;
 
-            console.log(
-                "UPLOAD RESPONSE:",
-                data
-            );
+try{
+    data = JSON.parse(text);
+}catch(e){
+    document.getElementById("result").innerHTML = `
+        <div class="card red">
+            ❌ SERVER DID NOT RETURN JSON
+            <br><br>
+            <pre style="white-space:pre-wrap;font-size:12px;">${text}</pre>
+        </div>
+    `;
+    return;
+}
+
+console.log("UPLOAD RESPONSE:", data);
 
 
 
