@@ -2886,29 +2886,30 @@ console.log("UPLOAD RESPONSE:", data);
 
 
 
-            if(data.status === "OK"){
+           if(data.status === "OK"){
 
 
-                document.getElementById("result").innerHTML = `
+    document.getElementById("result").innerHTML = `
 
-                <div class="card green">
+    <div class="card green scan-animate">
 
-                ✅ STOCK UPDATED
+    ✅ STOCK UPDATED
 
-                <br><br>
+    <br><br>
 
-                Rows:
-                <b>${data.rows}</b>
+    Rows:
+    <b>${data.rows}</b>
 
-                </div>
+    </div>
 
-                `;
-
-
-                refreshPage();
+    `;
 
 
-            }
+    // reset only the file input
+    document.getElementById("stockFile").value = "";
+
+
+}
             else{
 
 
