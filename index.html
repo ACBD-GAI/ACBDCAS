@@ -131,6 +131,7 @@ button:active {
   margin-top: 12px;
   background: white;
 }
+  
 
 .green {
   border-left: 6px solid #2ecc71;
@@ -718,8 +719,9 @@ VERIFY OTP
     overflow:hidden;
     ">
     </div>
-   <div id="auditCounter"
+  <div id="auditCounter"
 style="
+display:none;
 text-align:center;
 font-weight:bold;
 margin:10px;
@@ -755,7 +757,10 @@ disabled>
 🔍 SEARCH SI
 </button>
 
-<button class="btn-orange" onclick="refreshPage()">
+<button
+id="refreshBtn"
+class="btn-orange"
+onclick="refreshPage()">
 ♻ REFRESH
 </button>
 
@@ -772,6 +777,14 @@ class="btn-orange"
 onclick="document.getElementById('stockFile').click()"
 style="display:none;">
 📤 UPDATE STOCKS
+</button>
+
+     <button
+id="clearBtn"
+class="btn-orange"
+onclick="showClearDialog()"
+style="display:none;">
+🗑 CLEAR REPORT
 </button>
 
 <input
@@ -954,15 +967,87 @@ CANCEL
 </div>
   
 </div>
+  <div id="quitAuditDialog" class="report-overlay">
+
+<div class="report-modal">
+
+<div class="report-title">
+⚠ Stop Re-Inventory?
+</div>
+
+<div
+id="quitAuditMessage"
+class="report-subtitle"
+style="
+line-height:1.6;
+font-size:15px;
+margin-top:15px;
+">
+</div>
+
+<button
+class="btn-orange"
+onclick="confirmQuitAudit()">
+🛑 STOP RE-INVENTORY
+</button>
+
+<button
+class="cancel-report-btn"
+onclick="cancelQuitAudit()">
+CONTINUE SCANNING
+</button>
+
+</div>
+
+</div>
+
+<div id="clearDialog" class="report-overlay">
+
+<div class="report-modal">
+
+<div class="report-title">
+🗑 CLEAR REPORT
+</div>
+
+<div class="report-subtitle">
+Choose what to clear
+</div>
+
+<button
+class="btn-orange"
+onclick="clearReport('SCANRESULTS')">
+🗑 CLEAR SOLD-OUT REPORT
+</button>
+
+<button
+class="btn-orange"
+onclick="clearReport('AUDIT')"
+style="margin-top:10px;">
+🗑 CLEAR AUDITED REPORT
+</button>
+
+<button
+class="cancel-report-btn"
+onclick="closeClearDialog()">
+CANCEL
+</button>
+
+</div>
+
+</div>
+
+  
 
 
   
 <script>
-  let auditBusy = false;
 
 
-  const BRANCH="CAS";
-  let auditMode = false;
+let auditBusy = false;
+let auditCount = 0;
+
+const BRANCH="CAS";
+let auditMode = false;
 let scanner = null;
 let isScanning = false;
 let isSaving = false;
@@ -970,13 +1055,20 @@ let isSaving = false;
 let lastAuditBarcode = "";
 let tempCode = "";
 let tempSi = "";
+
+/* ===== NEW FOR CONTINUOUS RE-INVENTORY ===== */
+let auditQueue = [];
+let auditProcessing = false;
+let auditRecent = new Map();
+/* =========================================== */
+
 const STOCK_ADMIN = [
   "remnvill@gmail.com",
   "fmfc_audit654@yahoo.com"
 ];
 
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwPuuNlaG4RLUgajO-jr9Nmo1PRrCWqafrPJ7nsuUynUPt8IvfEGIIodD-CZiRwZF7M/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyebDmHmrn08cW7X2HFNIXEW5Vd5DlM1NGMhqKPV8_EWs5ElE7LHMVwcQ_XikXYxQY/exec";
 
 function getSessionParams(){
 
@@ -1016,6 +1108,14 @@ function checkReportAccess(){
     reportBtn.style.display =
       REPORT_USERS.includes(email) ? "block" : "none";
   }
+
+const clearBtn = document.getElementById("clearBtn");
+
+if(clearBtn){
+    clearBtn.style.display =
+        STOCK_ADMIN.includes(email) ? "block" : "none";
+}
+  
 
   if(updateBtn){
     updateBtn.style.display =
@@ -1265,7 +1365,7 @@ function setUIScanning(state) {
   const btn = document.getElementById("scanBtn");
   const siBox = document.getElementById("siNo");
   const reader = document.getElementById("reader");
-  const refreshBtn = document.querySelector(".btn-orange");
+  const refreshBtn = document.getElementById("refreshBtn");
 
   if (state) {
     btn.innerHTML = "⛔ STOP SCANNING";
@@ -1506,57 +1606,67 @@ async function toggleAuditScan() {
 
 
 
+
   // ================= STOP AUDIT =================
 
-  if (auditScanning) {
+if (auditScanning) {
 
-    auditScanning = false;
+  // Warn if there are still queued items
+  if (auditQueue.length > 0 || auditProcessing) {
 
-    btn.innerHTML = "🔄 RE-INVENTORY";
+    const pending = auditQueue.length + (auditProcessing ? 1 : 0);
 
+   const quit = await askQuitAudit(pending);
 
-    scanBtn.disabled = false;
-    scanBtn.style.opacity = "1";
-    scanBtn.style.cursor = "pointer";
-
-
-    if (auditScanner) {
-
-      try {
-
-        await auditScanner.stop();
-        await auditScanner.clear();
-
-      } catch(e){
-
-        console.log(e);
-
-      }
-
-
-      auditScanner = null;
-
-    }
-
-
-    document.getElementById("auditReader").style.display="none";
-
-
+if (!quit) {
     return;
-
+}
   }
 
+  auditScanning = false;
+
+  btn.innerHTML = "🔄 RE-INVENTORY";
+
+  scanBtn.disabled = false;
+  scanBtn.style.opacity = "1";
+  scanBtn.style.cursor = "pointer";
+
+  if (auditScanner) {
+    try {
+      await auditScanner.stop();
+      await auditScanner.clear();
+    } catch (e) {
+      console.log(e);
+    }
+
+    auditScanner = null;
+  }
+
+  document.getElementById("auditReader").style.display = "none";
+
+document.getElementById("auditCounter").style.display = "none";
+document.getElementById("auditCounter").innerHTML = "Scanned : 0";
+
+return;
+
+  return;
+}
 
 
   // ================= START AUDIT =================
 
 
   auditScanning = true;
+ auditQueue.length = 0;
+auditProcessing = false;
+auditRecent.clear();
 
-  auditCount = 0;
+auditCount = 0;
 
-  document.getElementById("auditCounter").innerHTML =
-  "Scanned : 0";
+document.getElementById("auditCounter").style.display = "block";
+
+document.getElementById("auditCounter").innerHTML =
+"Scanned : 0";
 
 
   btn.innerHTML = "⏹ STOP AUDIT";
@@ -1653,114 +1763,40 @@ async function toggleAuditScan() {
       },
 
 
-      async(decodedText)=>{
+     async (decodedText) => {
 
+    if (!auditScanning) return;
 
-        if(!auditScanning) return;
+    const barcode = decodedText.trim().toUpperCase();
 
+    // Ignore same barcode within 2 seconds
+    const now = Date.now();
+    const last = auditRecent.get(barcode) || 0;
 
-        if(auditBusy) return;
+    if (now - last < 2000) return;
 
+    auditRecent.set(barcode, now);
 
-        auditBusy=true;
-
-
-        beep();
-        vibrate();
-
-
-
-        try{
-
-
-          const res = await fetch(
-
-            API_URL +
-
-            "?action=checkAudit" +
-
-            "&barcode=" +
-            encodeURIComponent(decodedText) +
-
-            getSessionParams()
-
-          );
-
-
-          const data = await res.json();
-
-
-
-          if(data.status==="FOUND"){
-
-
-            await saveAudit(decodedText);
-
-
-          }
-
-
-          else if(data.status==="ALREADY_AUDITED"){
-
-
-            document.getElementById("result").innerHTML=`
-
-            <div class="card red">
-
-            🛑 ALREADY AUDITED
-
-            <br><br>
-
-            ${decodedText}
-
-            </div>
-
-            `;
-
-
-          }
-
-
-          else {
-
-
-            document.getElementById("result").innerHTML=`
-
-            <div class="no-results">
-
-            ❌ ITEM NOT FOUND
-
-            <br><br>
-
-            ${decodedText}
-
-            </div>
-
-            `;
-
-
-          }
-
-
-
+    // Cleanup old entries
+    for (const [k, t] of auditRecent) {
+        if (now - t > 10000) {
+            auditRecent.delete(k);
         }
+    }
 
-        finally{
+    // Immediate feedback
+    beep();
+    vibrate();
 
+    // Don't queue the same barcode twice
+if (!auditQueue.includes(barcode)) {
+    auditQueue.push(barcode);
+    processAuditQueue();
+}
 
-          setTimeout(()=>{
+}
 
-            auditBusy=false;
-
-          },500);
-
-
-        }
-
-
-      }
-
-    );
+);      
 
 
 
@@ -1865,6 +1901,7 @@ async function toggleAuditScan() {
 
 
     document.getElementById("auditReader").style.display="none";
+    document.getElementById("auditCounter").style.display = "none";
 
 
   }
@@ -1929,7 +1966,88 @@ alert(data.status);
 }
 
 }
+async function processAuditQueue(){
 
+    // Already processing?
+    if(auditProcessing) return;
+
+    auditProcessing = true;
+
+    while(auditQueue.length > 0 && auditScanning){
+
+        const barcode = auditQueue.shift();
+
+        try{
+
+            // Check item
+           const saveRes = await fetch(
+    API_URL +
+    "?action=saveAudit" +
+    "&barcode=" + encodeURIComponent(barcode) +
+    getSessionParams()
+);
+
+const saveData = await saveRes.json();
+
+if (saveData.status === "NOT_FOUND") {
+
+    document.getElementById("result").innerHTML = `
+    <div class="no-results">
+        ❌ ITEM NOT FOUND
+        <br><br>
+        ${barcode}
+    </div>`;
+
+    continue;
+}
+
+if (saveData.status === "ALREADY_AUDITED") {
+
+    document.getElementById("result").innerHTML = `
+    <div class="card red">
+        🛑 ALREADY AUDITED
+        <br><br>
+        ${barcode}
+    </div>`;
+
+    continue;
+}
+
+if (saveData.status === "RECORDED") {
+
+    auditCount++;
+
+    document.getElementById("auditCounter").innerHTML =
+        "Scanned : " + auditCount;
+
+    document.getElementById("result").innerHTML = `
+    <div class="card green scan-animate">
+        ✅ AUDIT RECORDED
+        <br><br>
+        <b>${saveData.colO}</b><br>
+        ${saveData.colJ || ""}
+        <br><br>
+        ${barcode}
+    </div>`;
+}
+
+        }catch(err){
+
+            console.log("Audit queue error:", err);
+
+            document.getElementById("result").innerHTML = `
+            <div class="card red">
+                ❌ NETWORK ERROR
+                <br><br>
+                ${barcode}
+            </div>`;
+        }
+    }
+
+    auditProcessing = false;
+}
+
+  
 
   
 async function saveYes() {
@@ -1995,46 +2113,67 @@ if (saveBtn) {
     let colO = data.colO || row?.[14] || "";
 
 
+    if (data.status === "ERROR") {
+
     document.getElementById("result").innerHTML = `
-      <div class="card green scan-animate">
+    <div class="card red">
 
-        <div>✅ ${data.status}</div>
+    ❌ ERROR
 
-        <br>
+    <br><br>
 
-        <b style="font-size:16px;">
-          ${colO}
-        </b>
+    ${data.error}
 
-        <br>
+    <br><br>
 
-        ${colJ ? `<small style="color:#666;">${colJ}</small><br>` : ""}
+    🏷️ ${tempCode}
 
-        <div style="margin-top:12px;font-size:14px;">
-          🏷️ ${tempCode}
-        </div>
-
-      </div>
+    </div>
     `;
 
-    
+    isSaving = false;
+    return;
+}
 
-  } catch(err){
+// SUCCESS
+document.getElementById("result").innerHTML = `
+<div class="card green scan-animate">
+
+✅ ADDED TO SOLD
+
+<br><br>
+
+<b>${colO}</b><br>
+
+${colJ ? `<small>${colJ}</small><br>` : ""}
+
+🏷️ ${tempCode}
+
+</div>
+`;
+
+tempCode = "";
+tempSi = "";
+
+}
+catch(err){
 
     console.error(err);
 
     document.getElementById("result").innerHTML = `
-      <div class="card red">
-        ❌ SAVE ERROR<br><br>
+    <div class="card red">
+        ❌ SAVE FAILED
+        <br><br>
         ${err.message}
-      </div>
+    </div>
     `;
 
-  }
+}
+finally{
 
+    isSaving = false;
 
-  isSaving = false;
-
+}
 }
 
 async function searchSI() {
@@ -2118,8 +2257,10 @@ auditScanner=null;
 }
 
 auditScanning=false;
-auditBusy=false;
+
   auditCount=0;
+
+document.getElementById("auditCounter").style.display = "none";
 
 document.getElementById("auditCounter").innerHTML =
 "Scanned : 0";
@@ -2733,6 +2874,88 @@ const res = await fetch(
 
 }
 
+function showClearDialog(){
+    document.getElementById("clearDialog").style.display = "flex";
+}
+
+function closeClearDialog(){
+    document.getElementById("clearDialog").style.display = "none";
+}
+
+async function clearReport(sheet){
+
+    const displayName =
+        sheet === "SCANRESULTS" ? "Sold Out" :
+        sheet === "AUDIT" ? "Re-Inventory" :
+        sheet;
+
+    if(!confirm(
+        "Clear all records from " + displayName + "?\n\nThis cannot be undone."
+    )) return;
+
+   if (sheet === "SCANRESULTS") {
+
+        const password = prompt(
+            "Enter administrator password to clear the Sold Out report:"
+        );
+
+        if (password === null) return;
+
+        if (password !== "12345") {
+            alert("❌ Incorrect password.");
+            return;
+        }
+    }
+  
+
+    closeClearDialog();
+
+    document.getElementById("result").innerHTML = `
+    <div class="card saving">
+        <div class="spinner"></div>
+        Clearing report...
+    </div>`;
+
+    try{
+
+        const res = await fetch(
+            API_URL +
+            "?action=clearReport" +
+            "&sheet=" + encodeURIComponent(sheet) +
+            getSessionParams()
+        );
+
+        const data = await res.json();
+
+        if(data.status=="OK"){
+
+            document.getElementById("result").innerHTML = `
+            <div class="card green">
+                ✅ REPORT CLEARED
+            </div>`;
+
+        }else{
+
+            document.getElementById("result").innerHTML = `
+            <div class="card red">
+                ❌ ${data.status}
+            </div>`;
+
+        }
+
+    }catch(err){
+
+        document.getElementById("result").innerHTML = `
+        <div class="card red">
+            ❌ SERVER ERROR
+        </div>`;
+
+    }
+}
+
+
+
+  
  async function uploadStockFile(file){
 
     if(!file){
@@ -2976,6 +3199,50 @@ console.log("UPLOAD RESPONSE:", data);
 
 
 }
+
+function askQuitAudit(pending){
+
+    document.getElementById("quitAuditMessage").innerHTML = `
+        ⚠ <b>${pending}</b> queued item(s) are still waiting to be processed.<br><br>
+
+        If you stop now, those items <b>will NOT be saved.</b><br><br>
+
+        Do you really want to stop Re-Inventory?
+    `;
+
+    document.getElementById("quitAuditDialog").style.display="flex";
+
+    return new Promise(resolve=>{
+        quitAuditResolve = resolve;
+    });
+
+}
+
+function confirmQuitAudit(){
+
+    document.getElementById("quitAuditDialog").style.display="none";
+
+    if(quitAuditResolve){
+        quitAuditResolve(true);
+        quitAuditResolve=null;
+    }
+
+}
+
+function cancelQuitAudit(){
+
+    document.getElementById("quitAuditDialog").style.display="none";
+
+    if(quitAuditResolve){
+        quitAuditResolve(false);
+        quitAuditResolve=null;
+    }
+
+}
+
+
+  
+  
 
   
 
